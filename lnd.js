@@ -1,7 +1,10 @@
 const LndGrpc = require('lnd-grpc');
 const dotenv = require('dotenv');
+const telegramBot = require('node-telegram-bot-api');
 
 dotenv.config();
+
+const bot = new telegramBot(process.env.TELEGRAM_BOT_TOKEN, {polling: false});
 
 const options = {
     host: process.env.HOST,
@@ -51,11 +54,18 @@ const invoiceEventStream = async () => {
         settle_index: 0,
     }).on('data', (invoice) => {
         console.log('invoice: ', invoice);
-
-        if (data.settled) {
+        if (invoice.settled) {
             console.log('Invoice settled');
 
-            // save invoice tx to database
+            // send message on telegram with details of the invoice
+            const message = `
+                Invoice Paid:
+                Amount: ${invoice.amt_paid} Satoshis
+                Description: ${invoice.description}
+                Payment Hash: ${invoice.r_hash.toString('hex')}
+            `;
+
+            bot.sendMessage(process.env.TELEGRAM_CHAT_ID, message);
         }
     }).on('end', () => {
         console.log('Invoice stream ended');
