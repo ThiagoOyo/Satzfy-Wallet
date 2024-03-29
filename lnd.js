@@ -52,20 +52,10 @@ const invoiceEventStream = async () => {
     const invoiceStream = await grpc.services.Lightning.subscribeInvoices({
         add_index: 0,
         settle_index: 0,
-    }).on('data', (invoice) => {
+    }).on('data', async (invoice) => {
         console.log('invoice: ', invoice);
         if (invoice.settled) {
-            console.log('Invoice settled');
-
-            // send message on telegram with details of the invoice
-            const message = `
-                Invoice Paid:
-                Amount: ${invoice.amt_paid} Satoshis
-                Description: ${invoice.description}
-                Payment Hash: ${invoice.r_hash.toString('hex')}
-            `;
-
-            bot.sendMessage(process.env.TELEGRAM_CHAT_ID, message);
+           await handleSettledInvoice(invoice);
         }
     }).on('end', () => {
         console.log('Invoice stream ended');
@@ -73,6 +63,30 @@ const invoiceEventStream = async () => {
         console.log('Invoice stream error: ', err);
     });
 }
+
+const handleSettledInvoice = async (invoice) => {
+    console.log('invoice: ', invoice);
+    if (invoice.settled) {
+        console.log('Invoice settled');
+        try {
+            const channelBalance = await getChannelBalance();
+            const message = `
+                Invoice Paid:
+                Amount: ${invoice.amt_paid} Satoshis
+                Memo: ${invoice.memo}
+                Payment Hash: ${invoice.r_hash.toString('hex')}
+
+                Channel:
+                Local Balance: ${channelBalance.local_balance.sat} Satoshis
+                Remote Balance: ${channelBalance.remote_balance.sat} Satoshis
+            `;
+
+            bot.sendMessage(process.env.TELEGRAM_CHAT_ID, message);
+        } catch (error) {
+            console.error('Error getting channel balance:', error);
+        }
+    }
+};
 
 module.exports = {
     connect, 
