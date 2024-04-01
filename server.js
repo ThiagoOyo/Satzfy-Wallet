@@ -41,8 +41,11 @@ const options = {
     passphrase: process.env.HTTPS_PASSPHRASE
 };
 
-https.createServer(options, server).listen(443, () => {
-    console.log('Servidor HTTPS rodando na porta 443');
+
+const port = process.env.HTTPS_PORT || 443;
+
+https.createServer(options, server).listen(port, () => {
+    console.log('HTTPS Server listen on port ', port);
 });
 
 
