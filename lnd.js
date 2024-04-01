@@ -47,6 +47,14 @@ const payInvoice = async ({payment_request}) => {
     return paidInvoice;
 }
 
+const decodePayReq = async ({payment_request}) => {
+    const decodedInvoice = await grpc.services.Lightning.decodePayReq({
+        pay_req: payment_request,
+    });
+
+    return decodedInvoice;
+}
+
 // This function creates a watcher on the invoice stream if you call on connect();
 const invoiceEventStream = async () => {
     const invoiceStream = await grpc.services.Lightning.subscribeInvoices({
@@ -94,5 +102,6 @@ module.exports = {
     getBalance,
     getChannelBalance,
     createInvoice,
-    payInvoice
+    payInvoice,
+    decodePayReq
 }

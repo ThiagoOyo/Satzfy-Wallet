@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { getBalance, createInvoice, getChannelBalance, payInvoice } = require("../lnd.js");
+const { getBalance, createInvoice, getChannelBalance, payInvoice, decodePayReq } = require("../lnd.js");
 
 router.get("/balance", (req, res) => {
     getBalance()
@@ -44,6 +44,18 @@ router.post(("/payinvoice"), (req, res) => {
             
             // save tx to database
             res.status(200).json(paidInvoice);
+        })
+        .catch((err) => {
+            res.status(500).json(err);
+        });
+});
+
+router.post("/decodepayreq", (req, res) => {
+    const { payment_request } = req.body;
+
+    decodePayReq({ payment_request })
+        .then((decodedInvoice) => {
+            res.status(200).json(decodedInvoice);
         })
         .catch((err) => {
             res.status(500).json(err);
